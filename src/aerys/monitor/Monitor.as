@@ -53,6 +53,11 @@ package aerys.monitor
 			setChartSize(_bitmapData.width, value);
 		}
 		
+		/**
+		 * Create a new Monitor object. 
+		 * @param myUpdateRate The number of update per second the monitor will perform.
+		 * 
+		 */
 		public function Monitor(myUpdateRate : Number = DEFAULT_UPDATE_RATE)
 		{
 			super();
@@ -82,20 +87,6 @@ package aerys.monitor
 			
 			_bitmapData = bmp;
 			_chart.bitmapData = _bitmapData;
-		}
-		
-		private function changeHandler(event : Event) : void
-		{
-			var target : IEventDispatcher = event.target as IEventDispatcher;
-			var properties : Array = _targets[target];
-			var numProperties : int = properties.length
-			
-			for (var i : int = 0; i < numProperties; ++i)
-			{
-				var property : String = properties[i] as String;
-				
-				_xml[property] = property + ": " + target[property];
-			}
 		}
 		
 		private function update() : void
@@ -137,6 +128,16 @@ package aerys.monitor
 			_label.htmlText = _xml;
 		}
 		
+		/**
+		 * Watch a property of a specified object.
+		 * 
+		 * @param myTarget The object containing the property to watch.
+		 * @param myProperty The name of the property to watch.
+		 * @param myColor The color of the displayed label/chart.
+		 * @param myScale The scale used to display the chart. Use "0" to disable the chart.
+		 * @param myOverflow If true, the modulo operator is used to make
+		 * sure the value can be drawn on the chart.
+		 */
 		public function watch(myTarget 		: Object,
 						      myProperty	: String,
 							  myColor		: int		= 0xffffff,
@@ -146,7 +147,6 @@ package aerys.monitor
 			if (!_targets[myTarget])
 				_targets[myTarget] = new Array();
 			
-			//myTarget.addEventListener(Event.CHANGE, changeHandler);
 			_targets[myTarget].push(myProperty);
 			_xml[myProperty] = myProperty + ": " + myTarget[myProperty];
 
