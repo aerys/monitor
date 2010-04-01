@@ -11,6 +11,7 @@ package aerys.monitor
 	import flash.text.TextField;
 	import flash.text.TextFieldAutoSize;
 	import flash.utils.Dictionary;
+	import flash.utils.clearInterval;
 	import flash.utils.setInterval;
 	
 	public class Monitor extends Sprite
@@ -63,7 +64,6 @@ package aerys.monitor
 			super();
 			
 			_updateRate = myUpdateRate;
-			_intervalId = setInterval(update, 1000. / _updateRate);
 			
 			_style.setStyle("debugger", {fontSize:		"9px",
 										 fontFamily:	"_sans",
@@ -74,6 +74,9 @@ package aerys.monitor
 			
 			addChild(_label);
 			addChild(_chart);
+			
+			addEventListener(Event.ADDED_TO_STAGE, addedToStageHandler);
+			addEventListener(Event.REMOVED_FROM_STAGE, removedFromStageHandler);
 		}
 		
 		public function setChartSize(myWidth : int, myHeight : int) : void
@@ -126,6 +129,16 @@ package aerys.monitor
 			
 			_bitmapData.unlock();			
 			_label.htmlText = _xml;
+		}
+		
+		private function addedToStageHandler(e : Event) : void
+		{
+			_intervalId = setInterval(update, 1000. / _updateRate);
+		}
+		
+		private function removedFromStageHandler(e : Event) : void
+		{
+			clearInterval(_intervalId);
 		}
 		
 		/**
