@@ -16,6 +16,7 @@ package aerys.monitor
 	
 	public class Monitor extends Sprite
 	{
+		//{ region static
 		public static const DEFAULT_UPDATE_RATE		: Number	= 1;
 
 		private static const DEFAULT_PADDING		: uint		= 20;
@@ -23,6 +24,14 @@ package aerys.monitor
 		private static const DEFAULT_CHART_WIDTH	: uint		= 100;
 		private static const DEFAULT_CHART_HEIGHT	: uint		= 50;
 
+		private static var _instance : Monitor		= null;
+		
+		public static function get monitor() : Monitor
+		{
+			return _instance || (_instance = new Monitor());
+		}
+		//} endregion
+		
 		private var _updateRate		: Number		= 0.;
 		private var _intervalId		: int			= 0;
 		
@@ -141,6 +150,36 @@ package aerys.monitor
 			clearInterval(_intervalId);
 		}
 		
+		public function setColor(myProperty : String, myColor : int) : void
+		{
+			_colors[myProperty] = myColor;
+		}
+		
+		public function getColor(myProperty : String) : int
+		{
+			return _colors[myProperty];
+		}
+		
+		public function getScale(myProperty : String) : Number
+		{
+			return _scales[myProperty];
+		}
+		
+		public function setScale(myProperty : String, myScale : Number) : void
+		{
+			_scales[myProperty] = myScale;
+		}
+		
+		public function getOverflow(myProperty : String) : Boolean
+		{
+			return _overflow[myProperty];
+		}
+		
+		public function setOverflow(myProperty : String, myOverflow : Boolean) : void
+		{
+			_overflow[myProperty] = myOverflow;
+		}
+		
 		/**
 		 * Watch a property of a specified object.
 		 * 
@@ -171,6 +210,30 @@ package aerys.monitor
 			_label.htmlText = _xml;
 			_chart.y = _label.textHeight + DEFAULT_PADDING;
 			_label.autoSize = TextFieldAutoSize.LEFT;
+		}
+		
+		public function watchProperties(myTarget 		: Object,
+										myProperties	: Array,
+										myColors		: Array		= null,
+										myScales		: Array		= null,
+										myOverflows		: Array		= null) : void
+		{
+			var numProperties : int = myProperties.length;
+			
+			for (var i : int = 0; i < numProperties; ++i)
+			{
+				watch(myTarget,
+					  myProperties[i],
+					  myColors ? myColors[i] : 0xffffff,
+					  myScales ? myScales[i] : 0.,
+					  myOverflows ? myOverflows[i] : false);
+			}
+		}
+		
+		public function watchObject(myTarget : Object) : void
+		{
+			for (var property : String in myTarget)
+				watch(myTarget, property);
 		}
 	}
 }
