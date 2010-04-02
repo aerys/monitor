@@ -63,6 +63,17 @@ package aerys.monitor
 			setChartSize(_bitmapData.width, value);
 		}
 		
+		public function set updateRate(value : Number) : void
+		{
+			_updateRate = value;
+			restartTimer();
+		}
+		
+		public function get updateRate() : Number
+		{
+			return _updateRate;
+		}
+		
 		/**
 		 * Create a new Monitor object. 
 		 * @param myUpdateRate The number of update per second the monitor will perform.
@@ -86,6 +97,14 @@ package aerys.monitor
 			
 			addEventListener(Event.ADDED_TO_STAGE, addedToStageHandler);
 			addEventListener(Event.REMOVED_FROM_STAGE, removedFromStageHandler);
+		}
+		
+		private function restartTimer() : void
+		{
+			if (_intervalId)
+				clearInterval(_intervalId);
+			
+			_intervalId = setInterval(update, 1000. / _updateRate);
 		}
 		
 		public function setChartSize(myWidth : int, myHeight : int) : void
@@ -142,12 +161,13 @@ package aerys.monitor
 		
 		private function addedToStageHandler(e : Event) : void
 		{
-			_intervalId = setInterval(update, 1000. / _updateRate);
+			restartTimer();
 		}
 		
 		private function removedFromStageHandler(e : Event) : void
 		{
 			clearInterval(_intervalId);
+			_intervalId = 0;
 		}
 		
 		public function setColor(myProperty : String, myColor : int) : void
