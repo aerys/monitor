@@ -212,7 +212,7 @@ package aerys.monitor
 		 */
 		public function watch(myTarget 		: Object,
 						      myProperty	: String,
-							  myColor		: int		= 0xffffff,
+							  myColor		: int		= 0,
 							  myScale		: Number	= 0.,
 							  myOverflow	: Boolean	= false) : void
 		{
@@ -226,7 +226,7 @@ package aerys.monitor
 			_scales[myProperty] = myScale;
 			_overflow[myProperty] = myOverflow;
 			
-			_style.setStyle(myProperty, {color: "#" + (myColor as Number).toString(16)});
+			_style.setStyle(myProperty, {color: "#" + (myColor as Number & 0xffffff).toString(16)});
 			_label.htmlText = _xml;
 			_chart.y = _label.textHeight + DEFAULT_PADDING;
 			_label.autoSize = TextFieldAutoSize.LEFT;
@@ -244,8 +244,8 @@ package aerys.monitor
 			{
 				watch(myTarget,
 					  myProperties[i],
-					  myColors ? myColors[i] : 0xffffff,
-					  myScales ? myScales[i] : 0.,
+					  myColors ? myColors[i] : 0,
+					  myScales && myScales[i] ? myScales[i] : 0.,
 					  myOverflows ? myOverflows[i] : false);
 			}
 		}
