@@ -4,22 +4,24 @@ package aerys.monitor
 	import flash.display.BitmapData;
 	import flash.display.Sprite;
 	import flash.events.Event;
-	import flash.events.IEventDispatcher;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
+	import flash.system.Capabilities;
+	import flash.system.System;
 	import flash.text.StyleSheet;
 	import flash.text.TextField;
 	import flash.text.TextFieldAutoSize;
 	import flash.utils.Dictionary;
-	import flash.utils.clearInterval;
-	import flash.utils.setInterval;
+	import flash.utils.getTimer;
+	
+	import mx.managers.SystemManager;
 	
 	public class Monitor extends Sprite
 	{
 		//{ region static
 		public static const DEFAULT_UPDATE_RATE		: Number	= 1;
 
-		private static const DEFAULT_PADDING		: uint		= 20;
+		private static const DEFAULT_PADDING		: uint		= 30;
 		private static const DEFAULT_BACKGROUND		: uint		= 0x00000000;
 		private static const DEFAULT_CHART_WIDTH	: uint		= 100;
 		private static const DEFAULT_CHART_HEIGHT	: uint		= 50;
@@ -36,7 +38,11 @@ package aerys.monitor
 		private var _intervalId		: int			= 0;
 		
 		private var _targets		: Dictionary	= new Dictionary();
-		private var _xml			: XML			= <debugger />;
+		private var _xml			: XML			= <monitor>
+														<vm />
+														<framerate />
+														<memory />
+													  </monitor>;
 		private var _colors			: Object		= new Object();
 		
 		private var _scales			: Object		= new Object();
@@ -48,6 +54,13 @@ package aerys.monitor
 																	 true,
 																	 DEFAULT_BACKGROUND);
 		private var _chart			: Bitmap		= new Bitmap(_bitmapData);
+		
+		private var _numFrames		: int			= 0;
+		private var _updateTime		: int			= 0;
+		private var _framerate		: int			= 0;
+		private var _maxMemory		: int			= 0;
+		
+		public function get framerate() : int	{ return _framerate; }
 		
 		public function get chartWidth() : int { return _bitmapData.width; }
 		
@@ -66,7 +79,6 @@ package aerys.monitor
 		public function set updateRate(value : Number) : void
 		{
 			_updateRate = value;
-			restartTimer();
 		}
 		
 		public function get updateRate() : Number
@@ -85,9 +97,13 @@ package aerys.monitor
 			
 			_updateRate = myUpdateRate;
 			
-			_style.setStyle("debugger", {fontSize:		"9px",
-										 fontFamily:	"_sans",
-										 leading:		"-2px"});
+			_style.setStyle("monitor", {fontSize:	"9px",
+										fontFamily:	"_sans",
+										leading:	"-2px"});
+			
+			setStyle("framerate", {color: "#ffaa00"});
+			setStyle("memory", {color: "#00ffff"});
+			setStyle("vm", {color: "#000000"})
 			
 			_label.styleSheet = _style;
 			_label.condenseWhite = true;
@@ -95,16 +111,10 @@ package aerys.monitor
 			addChild(_label);
 			addChild(_chart);
 			
-			addEventListener(Event.ADDED_TO_STAGE, addedToStageHandler);
-			addEventListener(Event.REMOVED_FROM_STAGE, removedFromStageHandler);
-		}
-		
-		private function restartTimer() : void
-		{
-			if (_intervalId)
-				clearInterval(_intervalId);
+			_xml.vm = Capabilities.version + (Capabilities.isDebugger ? " (debug)" : "")
 			
-			_intervalId = setInterval(update, 1000. / _updateRate);
+			addEventListener(Event.ADDED_TO_STAGE, addedToStageHandler);
+			//addEventListener(Event.REMOVED_FROM_STAGE, removedFromStageHandler);
 		}
 		
 		public function setChartSize(myWidth : int, myHeight : int) : void
@@ -120,54 +130,99 @@ package aerys.monitor
 			_chart.bitmapData = _bitmapData;
 		}
 		
-		private function update() : void
+		public function setStyle(myStyle : String, myValue : Object) : void
 		{
-			if (!visible)
-				return ;
-
-			_bitmapData.scroll(1, 0);
-			_bitmapData.fillRect(new Rectangle(0, 0, 1, _bitmapData.height),
-								 DEFAULT_BACKGROUND);
-			_bitmapData.lock();
+			_style.setStyle(myStyle, myValue);
 			
-			for (var target : Object in _targets)
+			if (myValue.color)
+				_colors[myStyle] = 0xff000000 | parseInt(myValue.color.substr(1), 16);
+		}
+		
+		private function enterFrameHandler(event : Event) : void
+		{
+			++_numFrames;
+			
+			var time : int = getTimer();
+			
+			if ((time - _updateTime) >= 1000. / _updateRate)
 			{
-				var properties : Array = _targets[target];
-				var numProperties : int	= properties.length;
-				
-				for (var i : int = 0; i < numProperties; ++i)
-				{
-					var property : String = properties[i];
-					var value : Object = target[property];
-					var scale : Number = _scales[property];
+				// framerate
+				_framerate = _numFrames / ((time - _updateTime) / 1000.);
 
-					_xml[property] = property + ": " + value.toString();
+				if (!visible || !stage)
+				{
+					_updateTime = time;
+					_numFrames = 0;
 					
-					if ((scale = _scales[property]) != 0.)
+					return ;
+				}
+				
+				// prepare bitmap data
+				_bitmapData.scroll(1, 0);
+				_bitmapData.fillRect(new Rectangle(0, 0, 1, _bitmapData.height),
+									 DEFAULT_BACKGROUND);
+				_bitmapData.lock();
+
+
+				_xml.framerate = "framerate: " + _framerate + " / " + stage.frameRate;
+				_bitmapData.setPixel32(0,
+									   (1. - _framerate / stage.frameRate) * (_bitmapData.height - 1),
+									   0xff000000 | _colors["framerate"])
+					
+				// memory
+				var totalMemory : int = System.totalMemory;
+				
+				if (totalMemory > _maxMemory)
+					_maxMemory = totalMemory;
+				
+				_xml.memory = "memory: " + (totalMemory / 1e6).toFixed(3) + " M.";
+				_bitmapData.setPixel32(0,
+									  (1. - totalMemory / _maxMemory) * (_bitmapData.height - 1),
+									  0xff000000 | _colors["memory"])
+				
+				// properties
+				for (var target : Object in _targets)
+				{
+					var properties : Array = _targets[target];
+					var numProperties : int	= properties.length;
+					
+					for (var i : int = 0; i < numProperties; ++i)
 					{
-						var n : Number = Number(value);
-						var scaledValue : Number = scale * (_overflow[property] ? Math.abs(n) % (1. / scale) : n);
+						var property : String = properties[i];
+						var value : Object = target[property];
+						var scale : Number = _scales[property];
+	
+						_xml[property] = property + ": " + value.toString();
 						
-						_bitmapData.setPixel32(0,
-											  (1. - scaledValue) * (_bitmapData.height - 1),
-											  0xff000000 | _colors[property]);
+						if ((scale = _scales[property]) != 0.)
+						{
+							var n : Number = Number(value);
+							var scaledValue : Number = scale * (_overflow[property] ? Math.abs(n) % (1. / scale) : n);
+							
+							_bitmapData.setPixel32(0,
+												  (1. - scaledValue) * (_bitmapData.height - 1),
+												  0xff000000 | _colors[property]);
+						}
 					}
 				}
+				
+				_bitmapData.unlock();			
+				_label.htmlText = _xml;
+				
+				_numFrames = 0;
+				_updateTime = time;
 			}
-			
-			_bitmapData.unlock();			
-			_label.htmlText = _xml;
 		}
 		
 		private function addedToStageHandler(e : Event) : void
 		{
-			restartTimer();
+			_maxMemory = System.totalMemory;
+			addEventListener(Event.ENTER_FRAME, enterFrameHandler);
 		}
 		
 		private function removedFromStageHandler(e : Event) : void
 		{
-			clearInterval(_intervalId);
-			_intervalId = 0;
+			removeEventListener(Event.ENTER_FRAME, enterFrameHandler);
 		}
 		
 		public function setColor(myProperty : String, myColor : int) : void
