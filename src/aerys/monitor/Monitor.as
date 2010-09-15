@@ -103,7 +103,7 @@ package aerys.monitor
 			
 			setStyle("framerate", {color: "#ffaa00"});
 			setStyle("memory", {color: "#00ffff"});
-			setStyle("vm", {color: "#000000"})
+			setStyle("vm", {color: "#7f7f7f"})
 			
 			_label.styleSheet = _style;
 			_label.condenseWhite = true;
