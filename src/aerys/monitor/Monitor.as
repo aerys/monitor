@@ -21,18 +21,21 @@ package aerys.monitor
 		//{ region static
 		public static const DEFAULT_UPDATE_RATE		: Number	= 1;
 
-		private static const DEFAULT_PADDING		: uint		= 30;
+		private static const DEFAULT_PADDING		: uint		= 10;
 		private static const DEFAULT_BACKGROUND		: uint		= 0x00000000;
 		private static const DEFAULT_CHART_WIDTH	: uint		= 100;
 		private static const DEFAULT_CHART_HEIGHT	: uint		= 50;
+		
+		private static const DEFAULT_COLOR			: uint		= 0xffffffff;
 
 		private static var _instance : Monitor		= null;
-		
 		public static function get monitor() : Monitor
 		{
 			return _instance || (_instance = new Monitor());
 		}
 		//} endregion
+		
+		private var _defaultColor	: uint			= DEFAULT_COLOR;
 		
 		private var _updateRate		: Number		= 0.;
 		private var _intervalId		: int			= 0;
@@ -60,11 +63,18 @@ package aerys.monitor
 		private var _framerate		: int			= 0;
 		private var _maxMemory		: int			= 0;
 		
+		public function get defaultColor() : uint { return _defaultColor; }
+		
 		public function get framerate() : int	{ return _framerate; }
 		
 		public function get chartWidth() : int { return _bitmapData.width; }
 		
 		public function get chartHeight() : int { return _bitmapData.height; }
+	
+		public function set defaultColor(value : uint) : void
+		{
+			_defaultColor = value;
+		}
 		
 		public function set chartWidth(value : int) : void
 		{
@@ -212,6 +222,8 @@ package aerys.monitor
 				_numFrames = 0;
 				_updateTime = time;
 			}
+			
+			_chart.y = _label.textHeight + DEFAULT_PADDING;
 		}
 		
 		private function addedToStageHandler(e : Event) : void
@@ -299,7 +311,7 @@ package aerys.monitor
 			{
 				watch(myTarget,
 					  myProperties[i],
-					  myColors ? myColors[i] : 0,
+					  myColors ? myColors[i] : _defaultColor,
 					  myScales && myScales[i] ? myScales[i] : 0.,
 					  myOverflows ? myOverflows[i] : false);
 			}
