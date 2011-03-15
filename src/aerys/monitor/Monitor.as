@@ -216,7 +216,7 @@ package aerys.monitor
 						var value : Object = target[property];
 						var scale : Number = _scales[property];
 	
-						_xml[property] = property + ": " + value.toString();
+						_xml[property] = property + ": " + value;
 						
 						if ((scale = _scales[property]) != 0.)
 						{
@@ -293,11 +293,11 @@ package aerys.monitor
 		 * @param myOverflow If true, the modulo operator is used to make
 		 * sure the value can be drawn on the chart.
 		 */
-		public function watch(target	: Object,
-						      property	: String,
-							  color		: int		= 0,
-							  scale		: Number	= 0.,
-							  overflow	: Boolean	= false) : Monitor
+		public function watchProperty(target	: Object,
+								      property	: String,
+									  color		: int		= 0,
+									  scale		: Number	= 0.,
+									  overflow	: Boolean	= false) : Monitor
 		{
 			if (!_targets[target])
 				_targets[target] = new Array();
@@ -321,17 +321,17 @@ package aerys.monitor
 			return this;
 		}
 		
-		public function watchProperties(target 		: Object,
-										properties	: Array,
-										colors		: Array		= null,
-										scales		: Array		= null,
-										overflows	: Array		= null) : Monitor
+		public function watch(target 		: Object,
+							  properties	: Array,
+							  colors		: Array		= null,
+							  scales		: Array		= null,
+							  overflows		: Array		= null) : Monitor
 		{
 			var numProperties : int = properties.length;
 			
 			for (var i : int = 0; i < numProperties; ++i)
 			{
-				watch(target,
+				watchProperty(target,
 					  properties[i],
 					  colors ? colors[i] : _defaultColor,
 					  scales && scales[i] ? scales[i] : 0.,
@@ -344,7 +344,7 @@ package aerys.monitor
 		public function watchObject(target : Object) : Monitor
 		{
 			for (var property : String in target)
-				watch(target, property);
+				watchProperty(target, property);
 			
 			return this;
 		}
