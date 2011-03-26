@@ -45,7 +45,7 @@ Usage
 Contribute
 ----------
 
-`aerys-monitor` is GPL-licensed.  Make sure you tell us everything that's wrong!
+`aerys-monitor` is MIT-licensed.  Make sure you tell us everything that's wrong!
 
 * [Source code](https://github.com/aerys/monitor)
 * [Issue tracker](https://github.com/aerys/monitor/issues)
